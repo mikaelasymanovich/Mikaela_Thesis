@@ -131,47 +131,55 @@ def main():
 			print "fail"
 
 
-	b4 = mpatches.Patch(color='#FC0927', label='All Three')
-	b0 = mpatches.Patch(color='#1964F5', label='Depression & Bipolar Disorder')
-	b1 = mpatches.Patch(color='#10D92F', label='Depression and Schizophrenia')
-	b2 = mpatches.Patch(color='#50F6FA', label='Schizophrenia and Bipolar Disorder')
-	b3 = mpatches.Patch(color='#F519B2', label='Schizophrenia Alone')
-	b5 = mpatches.Patch(color='#F7FA16', label='Depression Alone')
-	b6 = mpatches.Patch(color='#FA7716', label='Bipolar Disorder Alone')
-
+	b0 = mpatches.Patch(color='#663300', label='GD & BP & SCZ')
+	b1 = mpatches.Patch(color='#800080', label='GD & BP')
+	b2 = mpatches.Patch(color='#33cc33', label='GD & SCZ')
+	b3 = mpatches.Patch(color='#ff8c00', label='BP & SCZ')
+	b4 = mpatches.Patch(color='#ffff00', label='SCZ')
+	b5 = mpatches.Patch(color='#0000ff', label='GP')
+	b6 = mpatches.Patch(color='#ff0000', label='BP')
 
 	
-	# l = [b4, b0, b1, b2, b3, b5, b6]
-	# fig, ax = plt.subplots()
-	# ax.legend(l, ['All Three', 'Depression & Bipolar Disorder', 'Depression and Schizophrenia', 'Schizophrenia and Bipolar Disorder', 'Schizophrenia Alone',
-	# 	'Depression Alone', 'Bipolar Disorder Alone'])
-	# plt.legend(handles=l)
+	l = [b0, b1, b2, b3, b4, b5, b6]
+	fig, ax = plt.subplots()
+	ax.legend(l, ['GD, BP, SCZ', 'Depression & Bipolar Disorder', 'Depression & Schizophrenia', 'Schizophrenia & Bipolar Disorder', 'Schizophrenia Alone',
+		'Depression Alone', 'Bipolar Disorder Alone'])
+	plt.legend(handles=l)
 
-	# nx.draw_networkx_nodes(F,pos=pos,nodelist=all_disorders,node_color='#FC0927',node_size=300,alpha=0.9)
-	# nx.draw_networkx_nodes(F,pos=pos,nodelist=mdd_bp,node_color='#1964F5',node_size=300,alpha=0.9)
-	# nx.draw_networkx_nodes(F,pos=pos,nodelist=mdd_schizo,node_color='#10D92F',node_size=300,alpha=0.9)
-	# nx.draw_networkx_nodes(F,pos=pos,nodelist=bp_schizo,node_color='#50F6FA',node_size=300,alpha=0.9)
-	# nx.draw_networkx_nodes(F,pos=pos,nodelist=schizo_1,node_color='#F519B2',node_size=300,alpha=0.9)
-	# nx.draw_networkx_nodes(F,pos=pos,nodelist=mdd_1,node_color='#F7FA16',node_size=300,alpha=0.9)
-	# nx.draw_networkx_nodes(F,pos=pos,nodelist=bp_1,node_color='#FA7716',node_size=300,alpha=0.9)
+	nx.draw_networkx_nodes(F,pos=pos,nodelist=all_disorders,node_color='#663300',node_size=300,alpha=0.9)
+	nx.draw_networkx_nodes(F,pos=pos,nodelist=mdd_bp,node_color='#800080',node_size=300,alpha=0.9)
+	nx.draw_networkx_nodes(F,pos=pos,nodelist=mdd_schizo,node_color='#33cc33',node_size=300,alpha=0.9)
+	nx.draw_networkx_nodes(F,pos=pos,nodelist=bp_schizo,node_color='#ff8c00',node_size=300,alpha=0.9)
+	nx.draw_networkx_nodes(F,pos=pos,nodelist=schizo_1,node_color='#ffff00',node_size=300,alpha=0.9)
+	nx.draw_networkx_nodes(F,pos=pos,nodelist=mdd_1,node_color='#0000ff',node_size=300,alpha=0.9)
+	nx.draw_networkx_nodes(F,pos=pos,nodelist=bp_1,node_color='#ff0000',node_size=300,alpha=0.9)
 
-	# nx.draw_networkx_edges(F,pos=pos)
+	nx.draw_networkx_edges(F,pos=pos)
 	#nx.draw_networkx_labels(F, pos=pos)
-	#plt.legend()
+	plt.legend()
 
-	#plt.legend(handles=[b0, b1, b2, b3, b4, b5], loc='upper left')
-	#plt.colorbar(l)
+	plt.legend(handles=[b0, b1, b2, b3, b4, b5, b6], loc='upper left')
+	ax.set_yticklabels([])
+	ax.set_xticklabels([])
+	plt.tick_params(
+    axis='both',          # changes apply to the x-axis
+    which='both',      # both major and minor ticks are affected
+    left='off',      # ticks along the bottom edge are off
+    right='off',         # ticks along the top edge are off
+    labelleft='off',
+    top='off',
+    bottom='off')
 	#plt.axis('off')
-	print "all", len(mdd_bp) + len(bp_schizo) + len(all_disorders) + len(mdd_schizo)
-	print "mdd_bp", len(mdd_bp)
-	print "bp_schizo", len(bp_schizo)
-	print "all", len(all_disorders)
-	print "mdd", len(mdd_1)
-	print "bp", len(bp_1)
-	print "schizo", len(schizo_1)
+	# print "all", len(mdd_bp) + len(bp_schizo) + len(all_disorders) + len(mdd_schizo)
+	# print "mdd_bp", len(mdd_bp)
+	# print "bp_schizo", len(bp_schizo)
+	# print "all", len(all_disorders)
+	# print "mdd", len(mdd_1)
+	# print "bp", len(bp_1)
+	# print "schizo", len(schizo_1)
 
-	venn3(subsets = (len(bp_1), len(mdd_1), len(mdd_bp), len(schizo_1), len(bp_schizo), len(mdd_schizo), len(all_disorders)),
-		set_labels = ('Bipolar Disorder', 'Depression', 'Schizophrenia'))
+	# venn3(subsets = (len(bp_1), len(mdd_1), len(mdd_bp), len(schizo_1), len(bp_schizo), len(mdd_schizo), len(all_disorders)),
+	# 	set_labels = ('Bipolar Disorder', 'Depression', 'Schizophrenia'))
 	plt.show()
 
 ####################################################################################################

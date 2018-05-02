@@ -1,3 +1,4 @@
+##Methods to generate SP, get components, etc
 import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np

@@ -1,3 +1,5 @@
+##Permutation tests for connected components
+
 import networkx as nx
 import matplotlib.pyplot as plt
 from decimal import Decimal

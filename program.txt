@@ -1,0 +1,12 @@
+gwas_Alzheimer.tsv	76	18	7	0	0.565
+gwas_autism.tsv	108	43	38	0.02469136	0.037
+gwas_bipolar_disorder.tsv	159	78	62	0.01132076	0.114
+gwas_breast_cancer.tsv	108	32	27	0.01111111	0.257
+gwas_crohn.tsv	120	77	57	0.03483466	0
+gwas_Dementia.tsv	198	151	97	0.02993007	0.015
+gwas_depression.tsv	191	150	107	0.02127483	0
+gwas_major_depressive_disorder.tsv	109	49	38	0.01987768	0.058
+gwas_multiple_sclerosis.tsv	73	13	4	0	0.794
+gwas_schizophrenia.tsv	163	125	84	0.05178206	0.001
+gwas_waist_hip.tsv	67	17	9	0.04179105	0.297
+ulcerative_colitis.tsv	94	35	20	0.03475177	0.271

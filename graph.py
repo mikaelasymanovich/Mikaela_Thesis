@@ -1,3 +1,5 @@
+### Program that produces subnetworks for each disorder and prints statistics about that network
+### Results from this program seen in RESULTS_.txt
 import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
@@ -6,6 +8,7 @@ import math
 import os
 import pandas
 from collections import Counter
+import random
 
 def readDiseaseFile():
 	genes = []
@@ -47,7 +50,7 @@ def readGwasAssociationFile(disease):
 	total_genes = []
 	#f = open(os.path.join('./Diseases', 'ulcerative_colitis.tsv'))
 	f = open(os.path.join('./Diseases', disease))
-
+	max = 0;
 	first_line = 0
 	num_genes = 0;
 	num_assoc = 0;
@@ -56,6 +59,8 @@ def readGwasAssociationFile(disease):
 			num_assoc += 1;
 			x = line.split('\t')
 			p_value = Decimal(x[27])
+			if p_value > max:
+				max = p_value
 			associated_gene = x[14]
 
 			if (disease == 'gwas_schizophrenia.tsv' or disease == 'gwas_Alzheimer.tsv'):
@@ -63,31 +68,35 @@ def readGwasAssociationFile(disease):
 					formatted_gene = associated_gene.replace('"', '').replace(',', '').replace(';', '').replace('-', '')
 					mapped_genes = formatted_gene.split(' ')
 					for gene in mapped_genes:
-						if gene: 
-							genes.append(gene)
-							total_genes.append(gene)
-							num_genes += 1
+						if gene:
+							if gene not in genes: 
+								genes.append(gene)
+								total_genes.append(gene)
+								num_genes += 1
 			elif (disease == 'gwas_Dementia.tsv'):
 				if (p_value < 0.00000005):
 					formatted_gene = associated_gene.replace('"', '').replace(',', '').replace(';', '').replace('-', '')
 					mapped_genes = formatted_gene.split(' ')
 					for gene in mapped_genes:
 						if gene: 
-							genes.append(gene)
-							total_genes.append(gene)
-							num_genes += 1
+							if gene not in genes: 
+								genes.append(gene)
+								total_genes.append(gene)
+								num_genes += 1
 			else:
 				if (p_value < 0.000005):
 					formatted_gene = associated_gene.replace('"', '').replace(',', '').replace(';', '').replace('-', '')
 					mapped_genes = formatted_gene.split(' ')
 					for gene in mapped_genes:
 						if gene: 
-							genes.append(gene)
-							total_genes.append(gene)
-							num_genes += 1
+							if gene not in genes:
+								genes.append(gene)
+								total_genes.append(gene)
+								num_genes += 1
 
 		first_line = 1
 	
+	print max
 	#print("Number of mapped genes: ", num_genes, "\nNumber of associations: ", num_assoc)
 	return genes
 
@@ -134,17 +143,83 @@ def sampleDistribution(disease):
 	df.plot(kind='bar')
 	plt.show()
 
+def permutation_test(k, lows, meds, highs, file, G, cc_number, G0, G1, density, cluster_coeff):
+	N = 1000
+	print "permutation test for: ", file
+	nodes_all = G.nodes()
+
+	num_gt_cc = 0
+	num_gt_large_cc = 0
+	second_largest_num = 0
+	density_pr = 0
+	cluster_coeff_pr = 0
+
+
+	for i in range(0,N):
+		l = 0; m = 0; h = 0;
+		genes = []
+		while l < lows and m < meds and h < highs:
+			g = random.sample(nodes_all, 1)
+			g = g[0] #pick a random node
+			degree = G.degree(g)
+			if degree > 150 and h < highs:
+				genes.append(g)
+				highs += 1
+			elif degree > 50 and m < meds:
+				genes.append(g)
+				meds += 1
+			elif degree > 0 and l < lows:
+				genes.append(g)
+				lows += 1
+		
+		if len(genes) != k:
+			print("error!")
+
+		H = G.subgraph(genes)
+		nodes = nx.number_of_nodes(H)
+		edges = nx.number_of_edges(H)
+
+		if (nodes != 0):
+			cc = nx.number_connected_components(H)
+			density_ = (2.0*(edges))/(nodes*(nodes-1.0))
+			cluster_coeff_ = nx.average_clustering(H)
+			Gcc = sorted(nx.connected_component_subgraphs(H), key = len, reverse=True)
+			G0_ = nx.number_of_nodes(Gcc[0])
+			G1_ = nx.number_of_nodes(Gcc[1])
+
+
+			if (cc > cc_number):
+				num_gt_cc += 1
+			if (G0_ > G0):
+				num_gt_large_cc += 1
+			if (G1_ > G1):
+				second_largest_num += 1
+			if (density_ > density):
+				density_pr += 1
+			if (cluster_coeff_ > cluster_coeff):
+				cluster_coeff_pr += 1
+
+	print("Number of Connected Components")
+	print("P(X>x) = ", float(num_gt_cc)/float(N), "\n")
+
+	print("Largest Connected Component")
+	print("P(X>x) = ", float(num_gt_large_cc)/float(N), "\n")
+
+	print("Probability that the second largest component")
+	print("P(X>x) = ", float(second_largest_num)/float(N))
+
 # Writes results for one disease to a file
 # subgraph is the subgraph of the PPI graph of the genes for a specific disease
 # f is the file to write to
 # file is the filename aka the disease
-def printResults(subgraph, f, file):
+def printResults(G, subgraph, f, file):
 	edges = nx.number_of_edges(subgraph)
 	nodes = nx.number_of_nodes(subgraph)
+	genes = subgraph.nodes()
 	components = sorted(nx.connected_components(subgraph), key = len, reverse=True)
 	
 	if (nodes != 0):
-		density = Decimal(edges)/ (math.factorial(nodes)/(2*math.factorial((nodes-2))))
+		density = (2.0*(edges))/(nodes*(nodes-1.0))
 		cluster_coeff = nx.average_clustering(subgraph)
 		cc_number = nx.number_connected_components(subgraph)
 		Gcc=sorted(nx.connected_component_subgraphs(subgraph), key = len, reverse=True)
@@ -155,12 +230,28 @@ def printResults(subgraph, f, file):
 		for comp in Gcc:
 			graph_results.append(nx.number_of_nodes(comp))
 
-		plt.hist(graph_results, G0)
-		name = "Number of Connected Components Distribution in " + file
-		plt.xlabel(name)
-		plt.show()
-		print graph_results
+		#plt.hist(graph_results, G0)
+		#name = "Number of Connected Components Distribution in " + file
+		#plt.xlabel(name)
+		#plt.show()
+		#print graph_results
+		low_ = 50
+		medium_ = 150 
 
+		lows = 0
+		meds = 0
+		highs = 0
+
+		for g in genes:
+			degree = G.degree(g)
+			if degree > medium_:
+				highs += 1
+			elif degree > low_:
+				meds += 1
+			else:
+				lows += 1
+
+		#permutation_test(nodes, lows, meds, highs, file, G, cc_number, G0, G1, density, cluster_coeff)
 
     	cc_number_excuding_ones = 0
     	for component in Gcc:
@@ -174,36 +265,23 @@ def printResults(subgraph, f, file):
 
     	ratio = Decimal(cc_number)/nodes
 
-	f.write(file + "\t" + str(nodes) + "\t" + str(edges) + "\t" + str(cc_number) + "\t" + str(G0) + "\t" + str(G1) + "\t" + str(cluster_coeff) + "\t" + str(cc_number_excuding_ones) + "\t" + str(ratio) + "\n")
+	f.write(file + "\t" + str(nodes) + "\t" + str(edges) + "\t" + str(cc_number) + "\t" + str(G0) + "\t" + str(G1) + "\t" + str(density) + "\t" + str(cluster_coeff) + "\t" + str(cc_number_excuding_ones) + "\t" + str(ratio) + "\t" + str(lows) + "\t" + str(meds)+ "\t" + str(highs) + "\n")
 
 
 def main():
 
 	fh = open(os.path.join('./PPI_Graphs', 'reactomefi2015.tsv'), 'rb')
-	gh = open(os.path.join('./PPI_Graphs', 'irefindex14.tsv'), 'rb')
+	#gh = open(os.path.join('./PPI_Graphs', 'irefindex14.tsv'), 'rb')
 
 	G = nx.read_edgelist(fh, delimiter='\t')
-	G_ref = nx.read_edgelist(gh, delimiter='\t')
+	#G_ref = nx.read_edgelist(gh, delimiter='\t')
 
 	fh.close()
-	gh.close()
+	#gh.close()
 
-	#sampleDistribution('gwas_depression.tsv')
-	#genes, insignificants, total_genes = readGwasAssociationFile('gwas_multiple_sclerosis.tsv')
-	
-	#H = G.subgraph(genes)
-	#H_total = G.subgraph(total_genes)
-	#H_insig = G.subgraph(insignificants)
-	#H_ref = G_ref.subgraph(genes)
-	#nx.draw_networkx_nodes(H_total, genes, node_color = 'r')
-	#nx.draw_networkx_nodes(H_total, insignificants, node_color = 'b')
-	#nx.draw(H, node_color='#FF4500')
-	#plt.show()
-	#printResults(H)
+	f = open('confused.txt', 'w')
+	f.write("Disease\tNodes\tEdges\tConnected_Components\tLargest_CC\tSecond_Largest_CC\tDensity\tClustering_coeff\tCC's no single nodes\tNumber of CCs as Ratio\tLow Degree Nodes\tMedium Degree Nodes\tHigh Degree Nodes" + "\n")
 
-	f = open('results_irefindex.txt', 'w')
-	f.write("Disease\tNodes\tEdges\tConnected_Components\tLargest_CC\tSecond_Largest_CC\tClustering_coeff\tCC's no single nodes\tNumber of CCs as Ratio" + "\n")
-	#genes = readVegas()
 	#print all Values
 	print "BEGIN"
 	for file in os.listdir('./Diseases'):
@@ -211,18 +289,19 @@ def main():
 	 	if (file == 'vogelstein.txt'):
 	 		fx = open(os.path.join('./Diseases', file))
 	 		genes = fx.read().splitlines()
-	 		#H = G.subgraph(genes)
-	 		H_ref = G.subgraph(genes)
-	 		print("REACTOME")
-	 		printResults(H_ref, f, file)
+	 		H = G.subgraph(genes)
+	 		#H_ref = G.subgraph(genes)
+	 		#print("REACTOME")
+	 		#printResults(G, H, f, file)
 	 	elif (file != '.DS_Store'):
 	 		genes = readGwasAssociationFile(file)
-	 		#H = G.subgraph(genes)
-	 		H_ref = G.subgraph(genes)
-	 		#print("REACTOME")
-	 		#printResults(H, f, file)
-	 		print("IREFINDEX14")
-	 		printResults(H_ref, f, file)
+	 		f_new = open(file, 'w')
+	 		H = G.subgraph(genes)
+	 		nodes = list(H.nodes())
+	 		for x in nodes:
+	 			f_new.write(x + "\n")
+	 		#printResults(G, H, f, file)
+	
 
 	# nx.draw(H)
 	# plt.show()

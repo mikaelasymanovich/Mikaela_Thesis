@@ -8,6 +8,8 @@ import pandas
 from collections import Counter
 import matplotlib.patches as mpatches
 import operator
+from scipy.stats import hypergeom
+
 
 def readGwasAssociationFile(disease):
 	genes = []
@@ -87,6 +89,7 @@ def visualize(G, genes):
 	
 	F = nx.compose(G0, G1)
 	nodes = F.nodes()
+	print len(list(nodes))
 	pos=nx.spring_layout(F)
 
 	for n in nodes:
@@ -107,8 +110,8 @@ def visualize(G, genes):
 	    else:
 	        lg_3.append(n)
 
-	print "DEGREE DICTIONARY"
-	print degrees
+	#print "DEGREE DICTIONARY"
+	#print degrees
 
 	b0 = mpatches.Patch(color='#F8CDC1', label='d < 50')
 	b1 = mpatches.Patch(color='#F9A58A', label='d < 100')
@@ -134,6 +137,18 @@ def visualize(G, genes):
 	#plt.axis('off')
 	plt.show()
 
+def geometric_test(G, list1, list2, genes):
+	H = G.subgraph(genes)
+	overlap = 119
+	M = len(list(G.subgraph(list1)))
+	n = len(list(G.subgraph(list2)))
+	N = 10261
+
+	print overlap, M, n, N
+	pval = hypergeom.pmf(overlap-1, M, n, N)
+	print pval
+	# of 353 nodes, 
+
 def main():
 
 	fh = open(os.path.join('./PPI_Graphs', 'reactomefi2015.tsv'), 'rb')
@@ -142,27 +157,38 @@ def main():
 
 	file = 'gwas_depression.tsv'
 	mdd, g_p_mdd = readGwasAssociationFile(file)
-	print "\n"
-	print "ASSOCIATIONS DICT for DEPRESSION"
-	print g_p_mdd
+	list1 = mdd
+	#print "\n"
+	#print "ASSOCIATIONS DICT for DEPRESSION"
+	#print g_p_mdd
 	file = 'gwas_bipolar_disorder.tsv'
 	bp, g_p_bp = readGwasAssociationFile(file)
-	print "\n"
-	print "ASSOCIATIONS DICT for BIPOLAR"
-	print g_p_bp
+	list2 = bp
+	
+	#print "\n"
+	#print "ASSOCIATIONS DICT for BIPOLAR"
+	#print g_p_bp
 	file = 'gwas_schizophrenia.tsv'
 	schizo, g_p_schizo = readGwasAssociationFile(file)
-	print "\n"
-	genes = mdd + bp
 
-	F = get_centrality(G, genes)
-	nodes = nx.betweenness_centrality(F)
-	sorted_nodes = sorted(nodes.items(), key=operator.itemgetter(1))
+	#print "\n"
+	genes = mdd + bp + schizo
+	print len(genes)
+	H = G.subgraph(genes)
 
-	print sorted_nodes
+	Gcc=sorted(nx.connected_component_subgraphs(H), key = len, reverse=True)
+	G0 = Gcc[0]
+	G1 = Gcc[1]
+	print len(Gcc)
+	#F = get_centrality(G, genes)
+	#nodes = nx.betweenness_centrality(F)
+	#sorted_nodes = sorted(nodes.items(), key=operator.itemgetter(1))
+
+	#print sorted_nodes
 
 
 	visualize(G, genes)
+	#geometric_test(G, list1, list2, genes)
 	
 
 if  __name__ =='__main__':main()
